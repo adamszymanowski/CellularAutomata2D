@@ -22,8 +22,8 @@ namespace Grid
         s32 Y;
     };
 
-    const u32 Width = 128;
-    const u32 Height = Width;
+    const u32 Width = 128*4;
+    const u32 Height = Width/2;
     const auto Size = Width * Height;
 
     inline u32 CalcIndex(Point point)
@@ -45,7 +45,7 @@ namespace Bitmap
     const u32 SourceWidth = Grid::Width;
     const u32 SourceHeight = Grid::Height;
 
-    const u32 PixelSize = 6;
+    const u32 PixelSize = 3;
     const u32 DestinationWidth = SourceWidth * PixelSize;
     const u32 DestinationHeight = SourceHeight * PixelSize;
     const u32 BytesPerPixel = 4;	
@@ -64,14 +64,15 @@ namespace Bitmap
     }
 };
 
-namespace DiceRoll
+namespace Dice
 {
     // Setup d6 random die
     std::random_device rand_dev;
     std::default_random_engine rand_eng(rand_dev());
-    std::uniform_int_distribution<int> uniform_dist(1, 3);
+    const u32 sides = 3;
+    std::uniform_int_distribution<int> uniform_dist(1, sides);
 
-    inline u32 d3()
+    inline u32 Roll()
     {
         return uniform_dist(rand_eng);
     }
@@ -119,12 +120,16 @@ namespace Cells
         Grid::Point{ 1,  1}, 
     };
 
+    std::vector<u32> SurviveRules;
+    std::vector<u32> BornRules; 
+
     const auto dead_pixel = Bitmap::Pixel_RGB(255, 255, 255);
     const auto alive_pixel = Bitmap::Pixel_RGB(0, 0, 0);
 
     inline u32 DetermineStateAndOutputPixel(Grid::Point cell)
     {
-        auto CellIndex = Grid::CalcIndex(cell);
+        // Count cell's neighbours
+        auto cell_index = Grid::CalcIndex(cell);
         u32 neighbour_count = 0;
         for (auto& neighbour : Neighbours)
         {
@@ -135,21 +140,23 @@ namespace Cells
                 neighbour_count += 1;
         }
         
-        if (CurrentGeneration[CellIndex].alive)
+        // Determine cell's state based on a neighbour count
+        bool state = false;
+        if (CurrentGeneration[cell_index].alive)
         {
-            if (neighbour_count < 2 || neighbour_count > 3) 
-                NextGeneration[CellIndex].alive = false;
-            else 
-                NextGeneration[CellIndex].alive = true;
+            for (auto& rule : SurviveRules)
+                if (neighbour_count == rule) { state = true; }
+
+            NextGeneration[cell_index].alive = state;
 
             return alive_pixel;
         }
         else 
         {
-            if (neighbour_count == 3) 
-                NextGeneration[CellIndex].alive = true;
-            else 
-                NextGeneration[CellIndex].alive = false;
+            for (auto& rule : BornRules)
+                if (neighbour_count == rule) { state = true; }
+
+            NextGeneration[cell_index].alive = state;
 
             return dead_pixel;
         }
@@ -253,7 +260,7 @@ namespace WinApp
         // CA: fill cells randomly
         for (auto& cell : Cells::CurrentGeneration)
         {
-            if (DiceRoll::d3() == 3)
+            if (Dice::Roll() == Dice::sides)
                 cell.alive = true;
             else
                 cell.alive = false;

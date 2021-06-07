@@ -21,6 +21,8 @@ There's not much to it right now. I got basic Win32 Software renderer, and a sim
 
 
 # References
+- [Cellular Automata Rules Catalogue](https://catagolue.hatsya.com/rules)
+- [conwaylife wiki (seeds)](https://conwaylife.com/wiki/OCA:Seeds)
 - [Cellular Automata Rules](http://psoup.math.wisc.edu/mcell/ca_rules.html)
   * [Life Rules](http://psoup.math.wisc.edu/mcell/rullex_life.html)
   * [Generations Rules](http://psoup.math.wisc.edu/mcell/rullex_gene.html)
